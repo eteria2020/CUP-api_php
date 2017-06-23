@@ -1,0 +1,60 @@
+<?php
+ini_set('display_errors', 'On');
+error_reporting(E_ALL ^ E_NOTICE);
+
+// 31/12/2013-23:59:59
+$DateTimeFormat  ='d/m/Y-H:i:sP';
+
+
+
+
+function getDb() {
+
+  try {
+       $dbh = new PDO("pgsql:dbname=sharengo;host=localhost;port=5433", 'cs', 'gmjk51pa');
+  } catch (PDOException $e) {
+    echo "-1:Database error : $e";
+  }
+
+  return $dbh;
+
+}
+
+function getMongodb(){
+
+   $connstr = "mongodb://127.0.0.1:27017/sharengo";
+   $user = "sharengo";
+   $pwd = "gmjk51pa";
+
+   try {
+       $connection = new MongoClient($connstr,array('username'=>$user,'password'=>$pwd));
+   } catch (Exception $e) {
+     return NULL;
+   }
+
+   return $connection;
+
+}
+
+
+function validateDateTime($timestamp , $checkclock) {
+	//ISO 8601
+	$DateTimeFormat  ='Y/m/d H:i:s P';
+
+	$dt = date($DateTimeFormat,$timestamp);
+
+	return $dt;
+
+}
+
+function printOutput($out,$exit,$message, $extra=NULL) {
+	$out['result']=$exit;
+	$out['message']=$message;
+    if ($extra!=NULL) {
+      $out['extra']=$extra;
+    }
+	echo json_encode($out);
+
+}
+
+?>
