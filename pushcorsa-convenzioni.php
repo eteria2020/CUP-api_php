@@ -102,20 +102,61 @@ switch ($cmd) {
 
 
         try {
-            $sql = "SELECT id FROM trips WHERE car_plate = :targa AND timestamp_beginning=:ora";
+            $sql = "SELECT id, pin_type FROM trips WHERE car_plate = :targa AND timestamp_beginning=:ora";
             $stm = $dbh->prepare($sql);
             $stm->bindParam(':targa',$id_veicolo,PDO::PARAM_STR);
             $stm->bindParam(':ora',$orastr,PDO::PARAM_STR);
             $res = $stm->execute();
+			$row = $stm->fetch();
+
+			
+            if ($row ) {
+                if (isset($row) && $row[0]>0) {
+					if($n_pin==N_COMPANY_PIN && $row[1]!="company"){
+						
+						$is_business_trip = $n_pin == N_COMPANY_PIN;
+						$pin_type = $is_business_trip ? "company" : null;
+
+						$sql = "UPDATE trips SET pin_type = :pin_type ".
+							" WHERE id = :id";
+						$stm = $dbh->prepare($sql);
+						$dbh->beginTransaction();
+						$result = $stm->execute(array(':id'=>$row[0], ':pin_type' => $pin_type));
+						
+						
+						
 
 
+						$businessTripResult = false;
+						if ($is_business_trip) {
+							$sql = "INSERT INTO business.business_trip (business_code, group_id, trip_id) 
+								  SELECT business_employee.business_code, business_employee.group_id, :trip_id 
+								  FROM business.business_employee 
+								  WHERE business_employee.employee_id = :employee_id AND business_employee.status = 'approved'";
+							$stm = $dbh->prepare($sql);
+							$stm->bindParam(':trip_id',$row[0]);
+							$stm->bindParam(':employee_id',$id_cliente,PDO::PARAM_STR);
+							$businessTripResult = $stm->execute();
+						}
+						
 
-            if ($res ) {
-                $id = $stm->fetchColumn();
-                if (isset($id) && $id>0) {
-                    printOutput($out,$id,'Already sent');
-                    exit();
-                }
+						if ($result && (!$is_business_trip || $businessTripResult)) {
+							$dbh->commit();
+							printOutput($out,$row[0],'updated business');
+						} else {
+							$dbh->rollBack();
+							printOutput($out,-10,$dbh->errorInfo());
+						}
+						exit();
+					}else{
+						printOutput($out,$row[0],'Already sent');
+						exit();
+					}
+				}else{
+						printOutput($out,$row[0],'Already sent');
+						exit();
+					}
+                
             }
 
 
@@ -244,14 +285,33 @@ switch ($cmd) {
 
             $businessTripResult = false;
             if ($is_business_trip) {
-                $sql = "INSERT INTO business.business_trip (business_code, group_id, trip_id) 
-                      SELECT business_employee.business_code, business_employee.group_id, :trip_id 
-                      FROM business.business_employee 
-                      WHERE business_employee.employee_id = :employee_id AND business_employee.status = 'approved'";
-                $stm = $dbh->prepare($sql);
+				$skip = false;
+				
+				$sql = "SELECT business.business_trip.trip_id FROM business.business_trip WHERE business.business_trip.trip_id = :trip_id";
+				$stm = $dbh->prepare($sql);
                 $stm->bindParam(':trip_id',$id);
-                $stm->bindParam(':employee_id',$id_cliente,PDO::PARAM_STR);
-                $businessTripResult = $stm->execute();
+				$res = $stm->execute();
+				$row = $stm->fetch();
+
+				if ($row) {
+					if($row[0]>0){
+				
+						$skip=true;
+					}
+				}
+				var_dump($id);
+				if(!$skip){
+					$sql = "INSERT INTO business.business_trip (business_code, group_id, trip_id) 
+						  SELECT business_employee.business_code, business_employee.group_id, :trip_id 
+						  FROM business.business_employee 
+						  WHERE business_employee.employee_id = :employee_id AND business_employee.status = 'approved'";
+					$stm = $dbh->prepare($sql);
+					$stm->bindParam(':trip_id',$id);
+					$stm->bindParam(':employee_id',$id_cliente,PDO::PARAM_STR);
+					$businessTripResult = $stm->execute();
+				}else{
+					$businessTripResult = true;
+				}
             }
 
             if ($result && (!$is_business_trip || $businessTripResult)) {
