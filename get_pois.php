@@ -6,8 +6,8 @@
 require('inc/include.php');
 
 
- if (isset($_REQUEST['update'])) {
-    $update = $_REQUEST['update'];
+ if (isset($_REQUEST['lastupdate'])) {
+    $update = $_REQUEST['lastupdate'];
     $where = " WHERE update > :aupdate AND lon is not null AND lat is not null ";
  }  else {
     $update=null;
@@ -25,7 +25,7 @@ require('inc/include.php');
 
   $stm = $dbh->prepare($sql);
   if ($where!="") {
-    if (isset($update))  $stm->bindParam(':update', $update, PDO::PARAM_INT);
+    if (isset($update))  $stm->bindParam(':aupdate', $update, PDO::PARAM_INT);
   }
   $stm->execute();
 
