@@ -13,14 +13,7 @@ define('CMD_OFFLINE',3);
 function getAddressFromCoordinates($latitude, $longitude) {
 
         $url = "http://maps.sharengo.it/reverse.php?format=json&zoom=18&addressdetails=1&lon=" . $longitude . "&lat=" . $latitude;
-        $ctx = stream_context_create(array('http'=>
-		array(
-        'timeout' => 5,  //1200 Seconds is 20 Minutes
-		)
-	));
-
-	
-    $data = @file_get_contents($url, false, $ctx);
+        $data = @file_get_contents($url);
         $jsondata = json_decode($data,true);
 
         $road = (isset($jsondata['address']['road']) ?

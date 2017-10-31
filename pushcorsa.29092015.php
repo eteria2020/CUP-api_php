@@ -9,36 +9,6 @@ define('CMD_APERTURA',1);
 define('CMD_CHIUSURA', 2);
 define('CMD_OFFLINE',3);
 
-
-function getAddressFromCoordinates($latitude, $longitude) {
-
-        $url = "http://maps.sharengo.it/reverse.php?format=json&zoom=18&addressdetails=1&lon=" . $longitude . "&lat=" . $latitude;
-        $ctx = stream_context_create(array('http'=>
-		array(
-        'timeout' => 5,  //1200 Seconds is 20 Minutes
-		)
-	));
-
-	
-    $data = @file_get_contents($url, false, $ctx);
-        $jsondata = json_decode($data,true);
-
-        $road = (isset($jsondata['address']['road']) ?
-                $jsondata['address']['road'] :
-                (isset($jsondata['address']['pedestrian']) ? $jsondata['address']['pedestrian'] : ''));
-
-        $city = (isset($jsondata['address']['town']) ?
-                $jsondata['address']['town'] :
-                $jsondata['address']['city']);
-
-        return
-            (($road != '') ? $road . ', ' : '') .
-            (($city != '') ? $city . ', ' : '') .
-            $jsondata['address']['county'];
-
-}
-
-
   //print_r($_REQUEST);
 
 $out = array();
@@ -130,7 +100,7 @@ $out['message']='';
          }
 
          $pagabile = true;
-
+         /*
          try {
            $sql = "SELECT gold_list FROM customers WHERE id = :id_cliente ";
            $stm = $dbh->prepare($sql);
@@ -144,15 +114,11 @@ $out['message']='';
          } catch (Exception $e) {
 
          }
+          */
 
-         if ($lat && $lon)
-             $address_beginning =  getAddressFromCoordinates($lat,$lon);
-         else
-             $address_beginning = NULL;
 
-         $sql = "INSERT INTO trips ( customer_id,car_plate,timestamp_beginning,km_beginning,battery_beginning,longitude_beginning,latitude_beginning,geo_beginning,beginning_tx,payable, error_code,parent_id, address_beginning, fleet_id)".
-                  " VALUES (:id_cliente,:targa,:ora,:km,:carburante, cast(:lon as numeric),cast(:lat as numeric), ST_SetSRID(ST_MakePoint(:lon,:lat),4326), now(), :pagabile, :error_code, :id_parent, :address_beginning, ".
-                   "(SELECT fleet_id FROM cars WHERE plate=:targa)) RETURNING id";
+         $sql = "INSERT INTO trips ( customer_id,car_plate,timestamp_beginning,km_beginning,battery_beginning,longitude_beginning,latitude_beginning,geo_beginning,beginning_tx,payable, error_code,parent_id)".
+                  " VALUES (:id_cliente,:targa,:ora,:km,:carburante, cast(:lon as numeric),cast(:lat as numeric), ST_SetSRID(ST_MakePoint(:lon,:lat),4326), now(), :pagabile, :error_code, :id_parent ) RETURNING id";
          $stm = $dbh->prepare($sql);
          $stm->bindParam(':id_cliente',$id_cliente,PDO::PARAM_STR);
          $stm->bindParam(':targa',$id_veicolo,PDO::PARAM_STR);
@@ -169,7 +135,6 @@ $out['message']='';
          $stm->bindParam(':pagabile',$pagabile,PDO::PARAM_INT);
          $stm->bindParam(':error_code',$error_code,PDO::PARAM_INT);
          $stm->bindParam(':id_parent',$id_parent,PDO::PARAM_INT);
-         $stm->bindParam(':address_beginning',$address_beginning,PDO::PARAM_STR);
 
          $dbh->beginTransaction();
          $result = $stm->execute();
@@ -222,18 +187,11 @@ $out['message']='';
             exit();
          }
 
-         if ($lat && $lon)
-             $address_end =  getAddressFromCoordinates($lat,$lon);
-         else
-             $address_end = NULL;
 
-
-         $sql = "UPDATE trips SET timestamp_end = :ora ,km_end = :km ,battery_end = :carburante,  longitude_end = cast(:lon as numeric), latitude_end = cast(:lat as numeric), geo_end = ST_SetSRID(ST_MakePoint(:lon,:lat),4326),".
-                " end_tx = now(), park_seconds = :sosta_secondi, parent_id = :id_parent, address_end = :address_end ".
-                " WHERE id = :id";
+         $sql = "UPDATE trips SET timestamp_end = :ora ,km_end = :km ,battery_end = :carburante,  longitude_end = cast(:lon as numeric), latitude_end = cast(:lat as numeric), geo_end = ST_SetSRID(ST_MakePoint(:lon,:lat),4326), end_tx = now(), park_seconds = :sosta_secondi, parent_id = :id_parent WHERE id = :id";
          $stm = $dbh->prepare($sql);
          $dbh->beginTransaction();
-         $result = $stm->execute(array(':id'=>$id, ':ora' => $orastr, ':km' => $km , ':carburante' => $carburante , ':lon' => $lon , ':lat' => $lat, ':sosta_secondi' => $sosta_secondi , ':id_parent' => $id_parent, ':address_end' => $address_end));
+         $result = $stm->execute(array(':id'=>$id, ':ora' => $orastr, ':km' => $km , ':carburante' => $carburante , ':lon' => $lon , ':lat' => $lat, ':sosta_secondi' => $sosta_secondi , ':id_parent' => $id_parent));
 
          if ($result) {
            $dbh->commit();
