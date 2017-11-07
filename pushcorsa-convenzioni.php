@@ -326,7 +326,7 @@ switch ($cmd) {
                 }
             }
 
-            if ($result && (!$is_business_trip || $businessTripResult || $businessPaymentTypeResult)) {
+            if ($result && (!$is_business_trip || ($businessTripResult && $businessPaymentTypeResult))) {
                 $dbh->commit();
                 printOutput($out, $id, 'OK');
             } else {
