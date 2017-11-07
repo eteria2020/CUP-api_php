@@ -128,9 +128,9 @@ switch ($cmd) {
                         $businessTripResult = false;
                         if ($is_business_trip) {
                             $sql = "INSERT INTO business.business_trip (business_code, group_id, trip_id) 
-								  SELECT business_employee.business_code, business_employee.group_id, :trip_id 
-								  FROM business.business_employee 
-								  WHERE business_employee.employee_id = :employee_id AND business_employee.status = 'approved'";
+                                        SELECT business_employee.business_code, business_employee.group_id, :trip_id 
+                                        FROM business.business_employee 
+                                        WHERE business_employee.employee_id = :employee_id AND business_employee.status = 'approved'";
                             $stm = $dbh->prepare($sql);
                             $stm->bindParam(':trip_id', $row[0]);
                             $stm->bindParam(':employee_id', $id_cliente, PDO::PARAM_STR);
@@ -155,7 +155,6 @@ switch ($cmd) {
                     exit();
                 }
             }
-
 
             $sql = "SELECT count(*)  FROM trips WHERE car_plate <> :targa AND customer_id = :id_cliente AND timestamp_end is null";
             $stm = $dbh->prepare($sql);
@@ -319,14 +318,15 @@ switch ($cmd) {
                     $businessTripResult = true;
                 }
 
-                if(is_null($business['payment_type'])) {    // if payment_type is null, trip is not payable
+                $businessPaymentTypeResult = true;
+                if (is_null($business['payment_type'])) {    // if payment_type is null, trip is not payable
                     $sql = "UPDATE trips SET payable=false WHERE id = :trip_id";
                     $stm = $dbh->prepare($sql);
-                    $stm->execute(array(':trip_id' => $id));
+                    $businessPaymentTypeResult = $stm->execute(array(':trip_id' => $id));
                 }
             }
 
-            if ($result && (!$is_business_trip || $businessTripResult)) {
+            if ($result && (!$is_business_trip || $businessTripResult || $businessPaymentTypeResult)) {
                 $dbh->commit();
                 printOutput($out, $id, 'OK');
             } else {
