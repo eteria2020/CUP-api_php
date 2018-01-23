@@ -4,7 +4,8 @@ error_reporting(E_ALL ^ E_NOTICE);
 
 // 31/12/2013-23:59:59
 $DateTimeFormat  ='d/m/Y-H:i:sP';
-
+$PreautEnable = true;
+$Path = '/srv/apps/sharengo-publicsite';
 
 
 

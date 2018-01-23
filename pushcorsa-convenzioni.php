@@ -225,7 +225,32 @@ switch ($cmd) {
                 if ($error_code==15) {
                     printOutput($out,-15,'Open trips',$row);
                 } else {
-                    printOutput($out,$row,'OK');
+                    // preautorizzazione, la gestione resta ad OBC in caso di messaggio negativo SELFCLOSE
+                    if (abs(time()-$ora) <= 30 && $pagabile && $PreautEnable && (($id_veicolo == 'EH43571' && $id_cliente == 39096) || $id_cliente == 26740)) { //targa e id_cliente per test Milano 06/11/17
+                        $out['preaut_done']=false;
+                        try{
+                            $response = exec('bash ' . $Path . '/scripts/preauthorization.sh ' . $id_cliente . ' ' .$row); //valutare di implementare timeout lato pushcorsa
+                            //error_log($response);
+							$response = json_decode($response, true);
+							if (abs($response["response"]) == 22){
+								$preauth_enable = true;
+								printOutput($out,$row,'OK',NULL);
+								exit();
+							} else if (abs($response["response"]) < 26){ // preaut successfully
+                                printOutput($out,$row,'OK',NULL);
+                                exit();
+                            } else {
+                                //stop trip
+                                printOutput($out,$response["response"],'Preaut fail',$row);
+                                exit();
+                            }
+                        } catch (Exception $e) {
+                            //something went wrong
+                            printOutput($out,$row,'OK',NULL);
+                            exit();
+                        }
+                    }
+                    printOutput($out,$row,'OK',NULL);
                 }
             } else {
                 $dbh->rollBack();
