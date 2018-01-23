@@ -40,6 +40,27 @@ function getAddressFromCoordinates($latitude, $longitude) {
             $jsondata['address']['county'];
 }
 
+function getTripPayable($plate, $customerId) {
+	$result = true;
+
+	try {
+		$sql = "SELECT  (SELECT gold_list FROM customers WHERE id = :customer_id) OR EXISTS(SELECT 1 FROM cars WHERE plate= :plate AND fleet_id > 100) gold_list ";
+		$stm = $dbh->prepare($sql);
+		$stm->bindParam(':customer_id', $customerId, PDO::PARAM_STR);
+		$stm->bindParam(':plate', $plate, PDO::PARAM_STR);
+		$res = $stm->execute();
+		$row = $stm->fetch();
+
+		if ($row) {
+			$result = !$row[0];
+		}
+
+	} catch (Exception $e) {
+	}
+
+	return $result;
+}
+
 //print_r($_REQUEST);
 
 $out = array();
@@ -169,21 +190,7 @@ switch ($cmd) {
                 }
             }
 
-            $pagabile = true;
-
-            try {
-                $sql = "SELECT gold_list FROM customers WHERE id = :id_cliente ";
-                $stm = $dbh->prepare($sql);
-                $stm->bindParam(':id_cliente', $id_cliente, PDO::PARAM_STR);
-                $res = $stm->execute();
-                $row = $stm->fetch();
-                if ($row)
-                    $pagabile = !$row[0];
-                else
-                    $pagabile = true;
-            } catch (Exception $e) {
-                
-            }
+            $pagabile = getTripPayable($id_veicolo, $id_cliente);
 
             if ($lat && $lon)
                 $address_beginning = getAddressFromCoordinates($lat, $lon);
