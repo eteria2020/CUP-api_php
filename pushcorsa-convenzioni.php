@@ -121,10 +121,11 @@ switch ($cmd) {
 
 
         try {
-            $sql = "SELECT id, pin_type FROM trips WHERE car_plate = :targa AND timestamp_beginning=:ora";
+            $sql = "SELECT id, pin_type FROM trips WHERE car_plate = :targa AND timestamp_beginning=:ora AND customer_id = :id_cliente";
             $stm = $dbh->prepare($sql);
             $stm->bindParam(':targa', $id_veicolo, PDO::PARAM_STR);
             $stm->bindParam(':ora', $orastr, PDO::PARAM_STR);
+            $stm->bindParam(':id_cliente', $id_cliente, PDO::PARAM_STR);
             $res = $stm->execute();
             $row = $stm->fetch();
 
