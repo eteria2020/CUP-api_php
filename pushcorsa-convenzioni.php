@@ -228,7 +228,6 @@ switch ($cmd) {
                 if ($error_code == 15) {
                     printOutput($out, -15, 'Open trips', $row);
                 } else {
-<<<<<<< HEAD
                     // preautorizzazione, la gestione resta ad OBC in caso di messaggio negativo SELFCLOSE
                     if (abs(time()-$ora) <= 30 && $pagabile && $PreautEnable && (($id_veicolo == 'EH43571' && $id_cliente == 39096) || $id_cliente == 26740)) { //targa e id_cliente per test Milano 06/11/17
                         $out['preaut_done']=false;
@@ -255,9 +254,6 @@ switch ($cmd) {
                         }
                     }
                     printOutput($out,$row,'OK',NULL);
-=======
-                    printOutput($out, $row, 'OK');
->>>>>>> 39d4e1e83320561163585cda5ae05ea815eabb8c
                 }
             } else {
                 $dbh->rollBack();
