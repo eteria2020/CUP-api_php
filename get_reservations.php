@@ -14,7 +14,7 @@ $consumed=$_REQUEST['consumed'];
 
   $dbh = getDb();
 
-  $stm = $dbh->prepare("SELECT  id, cards , extract(epoch from beginning_ts) as time,  length  , active  FROM reservations WHERE  car_plate = :plate");
+  $stm = $dbh->prepare("SELECT  reservations.id, cards , customers.id as customer_id, customers.name , customers.surname , customers.mobile, customers.pin, customers.card_code,  extract(epoch from beginning_ts) as time,  length  , active  FROM reservations LEFT JOIN customers ON reservations.customer_id = customers.id WHERE  car_plate = :plate ");
 
   $stm->bindParam(':plate', $plate, PDO::PARAM_STR);
 
